@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8" />
+	<title>Admin</title>
+	<script src="/js/admin/react@18.1.0/react.production.min.js"></script>
+	<script src="/js/admin/react@18.1.0/react-dom.production.min.js"></script>
+	<script src="/js/admin/polyfill/polyfill.min.js"></script>
+	<script src="/js/admin/babel@7.18.5/babel.min.js"></script>
+</head>
+
+<body>
+
+<div id="cnt"></div>
+<div id="form"></div>
+<script type="text/babel">
+const Problematic = () => {
+	throw (new Error('버그가 나타났다!'));
+	return (
+		<div></div>
+	);
+	ReactDOM.render(<Problematic />, document.getElementById('root'));
+};
+
+class Counter extends React.Component {
+	static defaultProps = {
+    	name: 'cnt'
+	}
+
+	state = {
+		number: 0,
+		error: false
+	}
+
+	constructor(props) {
+		super(props);
+		console.log('constructor', '생성자');
+	}
+
+	componentWillMount() {
+		console.log('componentWillMount(v16.3 deprecated)', '컴포넌트 화면 직전');
+	}
+
+	componentDidMount() {
+		// 외부 라이브러리 연동: D3, masonry, etc
+		// 컴포넌트에서 필요한 데이터 요청: Ajax, GraphQL, etc
+		// DOM 에 관련된 작업: 스크롤 설정, 크기 읽어오기 등
+		console.log('componentDidMount', '컴포넌트 최종 노출');
+	}
+
+	static getDerivedStateFromProps(nextProps, prevState) {
+		/*
+		 * 여기서는 setState 를 하는 것이 아니라, 특정 props 가 바뀔 때 설정하고 설정하고 싶은 state 값을 리턴하는 형태로
+		 * if (nextProps.value !== prevState.value) { return { value: nextProps.value };} return null; null을 리턴하면 따로 업데이트 할 것은 없다라는 의미
+		 */
+		console.log('getDerivedStateFromProps', 'nextProps 받음');
+	}
+
+	shouldComponentUpdate(nextProps, nextState) {
+		// 컴포넌트 상태 업데이트. (Virtual DOM에 리렌더링 하는 것을 막음)
+
+		// 5 의 배수라면 리렌더링 하지 않음
+		if (nextState.number % 5 === 0) {
+			console.log('shouldComponentUpdate', '렌더링 여부:false');
+			return false;
+		} else {
+			console.log('shouldComponentUpdate', '렌더링 여부:true');
+			return true;
+		}
+
+		// default
+		return true;
+  	}
+
+	getSnapshotBeforeUpdate(nextProps, nextState) {
+		// 실제 DOM의 변화가 일어나기 직전의 시점. DOM 변화가 일어나기 직전의 DOM 상태를 가져오고, 여기서 리턴하는 값은 componentDidUpdate 에서 3번째 파라미터로 전달.
+		console.log('getSnapshotBeforeUpdate', 'DOM 렌더링 직전');
+	}
+
+	componentDidUpdate(prevProps, prevState, snapshot) {
+		console.log('componentDidUpdate', 'DOM(props, state) 업데이트');
+	}
+
+	componentWillUnmount() {
+		// 이벤트를 제거, setTimeout, clearTimeout, 외부 라이브러리 dispose
+		console.log('componentWillUnmount', '컴포넌트 소멸');
+	}
+
+	componentDidCatch(error, info) {
+		console.log('componentDidCatch', 'error...!');
+		this.setState({
+			error: true
+    	});
+	}
+
+	handleIncrease = () => {
+		console.log('');
+		const {number} = this.state;
+		this.setState({
+			number: number + 1
+		});
+	}
+
+	handleDecrease = () => {
+		console.log('');
+		this.setState(
+			({ number }) => ({
+				number: number - 1
+			})
+		);
+	}
+
+	render() {
+		if (this.props.name !== 'cnt' /* || ! this.props.object || this.props.array.length === 0*/) return null;
+
+		console.log('render', '렌더링');
+
+		if (this.state.error) {
+			return (<h1>에러발생!</h1>);
+		}
+
+		return (
+			<div>
+			<h1>카운터</h1>
+			<div>값: {this.state.number}</div>
+			{ this.state.number === 7 && <Problematic /> }
+			<button onClick={this.handleIncrease}>+</button>
+			<button onClick={this.handleDecrease}>-</button>
+			</div>
+		);
+	}
+}
+
+class PhoneForm extends React.Component {
+	state = {
+	    name: '',
+		phone: ''
+	}
+
+	handleChange = (e) => {
+    	this.setState({
+			[e.target.name]: e.target.value
+		})
+	}
+
+	handleSubmit = (e) => {
+		e.preventDefault();
+		this.props.onCreate(this.state);
+		this.setState({
+			name: '',
+			phone: ''
+	    })
+	}
+
+	render() {
+		return (
+			<form onSubmit={this.handleSubmit}>
+			<input
+				placeholder="이름"
+				value={this.state.name}
+				onChange={this.handleChange}
+				name="name"
+			/>
+			<input
+				placeholder="전화번호"
+				value={this.state.phone}
+				onChange={this.handleChange}
+				name="phone"
+			/>
+			<button type="submit">등록</button>
+			</form>
+		);
+	}
+}
+
+class App extends React.Component {
+	id = 2
+	state = {
+		information: [
+			{
+				id: 0,
+				name: '김민준',
+				phone: '010-0000-0000'
+			},
+			{
+				id: 1,
+				name: '홍길동',
+				phone: '010-0000-0001'
+			}
+		]
+	}
+
+  	handleCreate = (data) => {
+	    const { information } = this.state;
+	    this.setState({
+	      	information: information.concat({ id: this.id++, ...data })
+	    })
+  	}
+
+  	render() {
+	    const { information } = this.state;
+	    return (
+			<div>
+			<PhoneForm onCreate={this.handleCreate}/>
+			{JSON.stringify(information)}
+			</div>
+	    );
+  	}
+}
+
+class PhoneInfo extends React.Component {
+	static defaultProps = {
+	    info: {
+			name: '이름',
+			phone: '010-0000-0000',
+			id: 0
+	    }
+	}
+
+	render() {
+		const style = {
+			border: '1px solid black',
+			padding: '8px',
+			margin: '8px'
+		};
+
+		const {
+			name, phone, id
+		} = this.props.info;
+
+		return (
+			<div style={style}>
+			<div><b>{name}</b></div>
+			<div>{phone}</div>
+			</div>
+		);
+	}
+}
+
+
+ReactDOM.render(<Counter name='cnt'/>, document.getElementById('cnt'));
+ReactDOM.render(<App/>, document.getElementById('form'));
+</script>
+
+
+</body>
+
+</html>
